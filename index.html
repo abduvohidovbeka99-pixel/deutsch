@@ -602,6 +602,14 @@ h3 { font-size: 17px; font-weight: 700; }
 
 .feature-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .feature-row .qa.feature { margin-bottom: 0; }
+.dict-filters { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.dict-chips { margin: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.dict-chips::-webkit-scrollbar { display: none; }
+.dict-chips .chip { white-space: nowrap; flex: none; }
+.dhead { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 65px); z-index: 2; padding: 6px 14px; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--violet-soft); background: var(--surface-2); border-top: 1px solid var(--line); }
+#dwords { overflow: clip; }
+.dhead:first-child { border-top: 0; }
+.dhead + .w { border-top: 0; }
 footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -612,7 +620,7 @@ footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
     <span class="top-title" id="top-title"></span>
     <div class="top-actions">
       <a class="streak-chip" href="#settings" id="streak-chip"></a>
-      <a class="icon-btn" href="#search" id="nav-search" aria-label="Поиск слова" title="Поиск"></a>
+      <a class="icon-btn" href="#settings" id="nav-settings" aria-label="Профиль" title="Профиль"></a>
       <button class="icon-btn" id="theme-quick" aria-label="Сменить тему" title="Дневная / ночная тема"></button>
     </div>
   </div>
@@ -621,10 +629,10 @@ footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 <nav class="tabbar" aria-label="Разделы">
   <div class="tabbar-in">
     <a class="tab" href="#" id="nav-home"><span class="ti" data-icon="levels"></span><span>Уровни</span></a>
+    <a class="tab" href="#dict" id="nav-dict"><span class="ti" data-icon="dict"></span><span>Словарь</span></a>
     <a class="tab" href="#review" id="nav-review"><span class="ti" data-icon="review"><span class="badge" id="rev-badge" hidden></span></span><span>Повторение</span></a>
     <a class="tab" href="#grammar-all" id="nav-grammar"><span class="ti" data-icon="grammar"></span><span>Грамматика</span></a>
     <a class="tab" href="#texts-all" id="nav-texts"><span class="ti" data-icon="texts"></span><span>Тексты</span></a>
-    <a class="tab" href="#settings" id="nav-settings"><span class="ti" data-icon="user"></span><span>Профиль</span></a>
   </div>
 </nav>
 <script>
@@ -5621,9 +5629,9 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
     } catch (e) {}
   }
 
-  const NAV_TITLES = { home: 'Уровни', review: 'Повторение', grammar: 'Грамматика', texts: 'Тексты', gender: 'Артикли', settings: 'Профиль', search: 'Поиск' };
+  const NAV_TITLES = { dict: 'Словарь', home: 'Уровни', review: 'Повторение', grammar: 'Грамматика', texts: 'Тексты', gender: 'Артикли', settings: 'Профиль', search: 'Поиск' };
   function setNav(which) {
-    ['home', 'review', 'gender', 'grammar', 'texts', 'settings', 'search'].forEach(k => {
+    ['home', 'dict', 'review', 'gender', 'grammar', 'texts', 'settings', 'search'].forEach(k => {
       const el = document.getElementById('nav-' + k);
       if (el) { el.classList.toggle('on', which === k); if (which === k) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); }
     });
@@ -5643,12 +5651,13 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
     user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    dict: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/></svg>',
     review: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>',
     flame: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3.5 5 5.8 5 11a5 5 0 0 1-10 0c0-2.4 1.2-4 2.5-5.2.2 1.7 1 2.7 2 3.2C11 8 10.8 5 12 2z"/></svg>',
     bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>'
   };
   document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = UI[el.dataset.icon] || ''; });
-  document.getElementById('nav-search').innerHTML = UI.search;
+  document.getElementById('nav-settings').innerHTML = UI.user;
   const isDark = () => prefs.theme === 'dark' || (prefs.theme === 'system' && (document.documentElement.getAttribute('data-theme') === 'dark' || (document.documentElement.getAttribute('data-theme') !== 'light' && !(window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches))));
   let installEvt = null;
   const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
@@ -5742,7 +5751,7 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
         </div>
       </div>
       <div class="quick">
-        <a class="qa" href="#gender-all" onclick="try{localStorage.setItem('ww-goto-train','1')}catch(e){}"><span class="qi">${UI.articles}</span><span>Тренажёр артиклей<small>der · die · das</small></span></a>
+        <a class="qa" href="#dict-train"><span class="qi">${UI.articles}</span><span>Тренажёр артиклей<small>der · die · das</small></span></a>
         <a class="qa" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов</small></span></a>
         <a class="qa" href="#placement"><span class="qi">${UI.search}</span><span>Тест на уровень<small>${prefs.placed ? 'ваш уровень: ' + prefs.placed : '5 минут'}</small></span></a>
         <a class="qa" href="#texts-all"><span class="qi">${UI.texts}</span><span>Тексты<small>${tTotal} текстов с тестами</small></span></a>
@@ -6024,7 +6033,7 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
           <div class="trows">${g.map((t, i) => { const done = doneGrammar.has(L.id + '|' + i); return `<a class="trow ${done ? 'done' : ''}" href="#gram-${L.id}-${i}"><span class="tnum">${i + 1}</span><span class="tmain"><b>${esc(t.t)}</b><span>${esc(t.s || '')}</span></span><span class="tstat">${done ? 'пройдена' : `${(t.q || []).length} вопр.`}</span></a>`; }).join('')}</div></section>`;
       }).join('')}</div>`;
     const nounsN = new Set(ALL.filter(w => w.pos === 'noun').map(w => w.de)).size;
-    app.querySelector('.chips').insertAdjacentHTML('beforebegin', `<div class="feature-row"><a class="qa feature" href="#gender-all"><span class="qi">${UI.articles}</span><span>Артикли der · die · das<small>${nounsN} существительных по родам · тренажёр</small></span><span class="go">→</span></a><a class="qa feature" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов · таблицы и тренажёр</small></span><span class="go">→</span></a></div>`);
+    app.querySelector('.chips').insertAdjacentHTML('beforebegin', `<div class="feature-row"><a class="qa feature" href="#dict-gender"><span class="qi">${UI.articles}</span><span>Артикли der · die · das<small>${nounsN} существительных по родам · тренажёр</small></span><span class="go">→</span></a><a class="qa feature" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов · таблицы и тренажёр</small></span><span class="go">→</span></a></div>`);
     app.querySelectorAll('[data-galvl]').forEach(b => b.onclick = () => { prefs.gaLvl = b.dataset.galvl; savePrefs(); viewGrammarAll(); });
   }
 
@@ -6120,18 +6129,19 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
   // ----- род: der / die / das -----
   const genderOf = w => w.plOnly ? 'pl' : w.art;
   function viewGender(L) {
-    setNav(L ? 'home' : 'grammar');
+    setNav(L ? 'home' : 'dict');
     let words;
     if (L) words = levelWords(L).filter(w => w.pos === 'noun');
     else {
       const seen = new Set();
       words = ALL.filter(w => w.pos === 'noun' && (prefs.gLvl === 'all' || !prefs.gLvl || w.lvl === prefs.gLvl) && !seen.has(w.de) && seen.add(w.de));
     }
-    const head = L ? levelHead(L, 'r') : `<a class="back" href="#grammar-all">← Грамматика</a><div class="stack" style="gap:6px;margin-bottom:18px"><div class="eyebrow">Все уровни</div><h1 style="font-size:clamp(24px,4vw,36px)">Артикли der, die, das</h1><p class="lead">Все существительные словаря, разделённые по роду. Тренажёр помогает запомнить артикли.</p></div>
+    try { if (localStorage.getItem('ww-goto-train')) { localStorage.removeItem('ww-goto-train'); prefs.gMode = 'train'; savePrefs(); } } catch (e) {}
+    const head = L ? levelHead(L, 'r') : dictHead(prefs.gMode === 'train' ? 'train' : 'gender') + `
       <div class="chips" style="margin-bottom:6px">${['all', ...LEVELS.map(x => x.id)].map(id => `<button class="chip ${(prefs.gLvl || 'all') === id ? 'on' : ''}" data-glvl="${id}">${id === 'all' ? 'Все уровни' : id}</button>`).join('')}</div>`;
     try { if (localStorage.getItem('ww-goto-train')) { localStorage.removeItem('ww-goto-train'); prefs.gMode = 'train'; savePrefs(); } } catch (e) {}
     const gm = prefs.gMode || 'list';
-    app.innerHTML = head + `<div class="toolbar"><div class="seg"><button data-gmode="list" class="${gm === 'list' ? 'on' : ''}">Таблица родов</button><button data-gmode="train" class="${gm === 'train' ? 'on' : ''}">Тренажёр артиклей</button></div><span class="muted" style="font-size:14px">${words.length} ${plural(words.length, 'существительное', 'существительных', 'существительных')}</span></div><div id="gbox"></div>`;
+    app.innerHTML = head + `<div class="toolbar">${L ? `<div class="seg"><button data-gmode="list" class="${gm === 'list' ? 'on' : ''}">Таблица родов</button><button data-gmode="train" class="${gm === 'train' ? 'on' : ''}">Тренажёр артиклей</button></div>` : ''}<span class="muted" style="font-size:14px">${words.length} ${plural(words.length, 'существительное', 'существительных', 'существительных')}</span></div><div id="gbox"></div>`;
     app.querySelectorAll('[data-gmode]').forEach(b => b.onclick = () => { prefs.gMode = b.dataset.gmode; savePrefs(); viewGender(L); });
     app.querySelectorAll('[data-glvl]').forEach(b => b.onclick = () => { prefs.gLvl = b.dataset.glvl; savePrefs(); viewGender(null); });
     const box = document.getElementById('gbox');
@@ -6301,6 +6311,67 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
   }
 
   // ----- search -----
+  // ----- словарь: все слова списком -----
+  function dictHead(active) {
+    const nouns = new Set(ALL.filter(w => w.pos === 'noun').map(w => w.de)).size;
+    return `<div class="stack" style="gap:6px;margin-bottom:14px"><div class="eyebrow">${ALL.length} слов · A0–C1</div><h1 style="font-size:clamp(26px,4.5vw,38px)">Словарь</h1></div>
+      <div class="tabs"><a href="#dict" class="${active === 'all' ? 'on' : ''}">Все слова<span class="count">${ALL.length}</span></a><a href="#dict-gender" class="${active === 'gender' ? 'on' : ''}">По родам<span class="count">${nouns}</span></a><a href="#dict-train" class="${active === 'train' ? 'on' : ''}">Тренажёр артиклей</a></div>`;
+  }
+  let dictQ = '';
+  function viewDict(focus) {
+    setNav('dict');
+    const lv = prefs.dLvl || 'all', ps = prefs.dPos || 'all', gn = prefs.dGen || 'all', so = prefs.dSort || 'az';
+    const chipRow = (key, cur, items) => `<div class="chips dict-chips">${items.map(([v, n]) => `<button class="chip ${cur === v ? 'on' : ''}" data-dk="${key}" data-dv="${v}">${n}</button>`).join('')}</div>`;
+    app.innerHTML = dictHead('all') + `
+      <input id="dq" class="search-in" type="search" placeholder="Найти слово по-немецки или по-русски" autocomplete="off" value="${esc(dictQ)}">
+      <div class="dict-filters">
+        ${chipRow('dLvl', lv, [['all', 'Все уровни'], ...LEVELS.map(L => [L.id, L.id])])}
+        ${chipRow('dPos', ps, [['all', 'Все части речи'], ...POS_ORDER.map(p => [p, POS_NAMES[p]])])}
+        <div class="row" style="justify-content:space-between;gap:10px">
+          ${chipRow('dGen', gn, [['all', 'Любой род'], ['der', 'der'], ['die', 'die'], ['das', 'das']])}
+          <div class="seg"><button data-dk="dSort" data-dv="az" class="${so === 'az' ? 'on' : ''}">А–Я</button><button data-dk="dSort" data-dv="lvl" class="${so === 'lvl' ? 'on' : ''}">По уровням</button></div>
+        </div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin:12px 0 8px"><span class="muted" id="dcount"></span><div class="legend"><span><b class="art-der">der</b></span><span><b class="art-die">die</b></span><span><b class="art-das">das</b></span></div></div>
+      <div id="dlist"></div>`;
+    app.querySelectorAll('[data-dk]').forEach(b => b.onclick = () => { prefs[b.dataset.dk] = b.dataset.dv; if (b.dataset.dk === 'dGen' && b.dataset.dv !== 'all') prefs.dPos = 'noun'; if (b.dataset.dk === 'dPos' && b.dataset.dv !== 'noun') prefs.dGen = 'all'; savePrefs(); viewDict(); });
+    const q = document.getElementById('dq');
+    const norm = x => x.toLowerCase().replace(/ё/g, 'е');
+    const letterOf = w => (w.base[0] || '#').toUpperCase().replace('Ä', 'A').replace('Ö', 'O').replace('Ü', 'U');
+    let obs = null;
+    const draw = () => {
+      if (!document.getElementById('dcount') || !q.isConnected) return;
+      const v = norm(q.value.trim()); dictQ = q.value;
+      let list = ALL.filter(w => (lv === 'all' || w.lvl === lv) && (ps === 'all' || w.pos === ps) && (gn === 'all' || (w.art === gn && !w.plOnly)) && (!v || norm(w.de).includes(v) || norm(w.ru).includes(v)));
+      if (so === 'az') list = list.slice().sort((a, b) => a.base.localeCompare(b.base, 'de', { sensitivity: 'base' }));
+      document.getElementById('dcount').textContent = `${list.length} ${plural(list.length, 'слово', 'слова', 'слов')}`;
+      const box = document.getElementById('dlist');
+      if (obs) obs.disconnect();
+      if (!list.length) { box.innerHTML = '<div class="empty">Ничего не найдено. Попробуйте другое слово или снимите фильтры.</div>'; return; }
+      let i = 0, lastHead = '';
+      box.innerHTML = '<div class="words" id="dwords"></div><div id="dsent" style="height:1px"></div>';
+      const wrap = document.getElementById('dwords');
+      const more = () => {
+        const end = Math.min(list.length, i + 150);
+        let html = '';
+        for (; i < end; i++) {
+          const w = list[i];
+          const h = so === 'az' ? letterOf(w) : w.lvl;
+          if (h !== lastHead) { lastHead = h; html += `<div class="dhead">${so === 'az' ? h : h + ' · ' + esc(lvlById(h).name)}</div>`; }
+          html += wordRow(w, so === 'az' || lv === 'all');
+        }
+        wrap.insertAdjacentHTML('beforeend', html);
+        if (i >= list.length && obs) obs.disconnect();
+      };
+      more();
+      try { obs = new IntersectionObserver(es => { if (es[0].isIntersecting) more(); }, { rootMargin: '800px' }); obs.observe(document.getElementById('dsent')); } catch (e) { while (i < list.length) more(); }
+    };
+    let t = null;
+    q.oninput = () => { clearTimeout(t); t = setTimeout(draw, 120); };
+    draw();
+    if (focus) q.focus();
+  }
+
   function viewSearch() {
     setNav('search');
     app.innerHTML = `<div class="stack" style="gap:8px;margin-bottom:16px"><div class="eyebrow">Весь словарь · ${ALL.length} слов</div><h1 style="font-size:clamp(24px,4vw,36px)">Поиск слова</h1></div>
@@ -7042,7 +7113,10 @@ window.POS_ORDER = ['noun', 'verb', 'adj', 'adv', 'pron', 'num', 'prep', 'conj',
     else if ((m = h.match(/^gender-(\w+)$/)) && lvlById(m[1])) viewGender(lvlById(m[1]));
     else if ((m = h.match(/^vocab-(\w+)-(\d+)$/)) && lvlById(m[1]) && lvlById(m[1]).sections[+m[2]]) viewSection(lvlById(m[1]), +m[2]);
     else if ((m = h.match(/^gram-(\w+)-(\d+)$/)) && lvlById(m[1])) viewGrammar(lvlById(m[1]), +m[2]);
-    else if (h === 'search') viewSearch();
+    else if (h === 'search') viewDict(true);
+    else if (h === 'dict') viewDict();
+    else if (h === 'dict-gender') { prefs.gMode = 'list'; savePrefs(); viewGender(null); }
+    else if (h === 'dict-train') { prefs.gMode = 'train'; savePrefs(); viewGender(null); }
     else viewHome();
     window.scrollTo(0, 0);
     if (!reduceMotion()) { app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); }

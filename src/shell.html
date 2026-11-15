@@ -602,6 +602,14 @@ h3 { font-size: 17px; font-weight: 700; }
 
 .feature-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .feature-row .qa.feature { margin-bottom: 0; }
+.dict-filters { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.dict-chips { margin: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.dict-chips::-webkit-scrollbar { display: none; }
+.dict-chips .chip { white-space: nowrap; flex: none; }
+.dhead { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 65px); z-index: 2; padding: 6px 14px; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--violet-soft); background: var(--surface-2); border-top: 1px solid var(--line); }
+#dwords { overflow: clip; }
+.dhead:first-child { border-top: 0; }
+.dhead + .w { border-top: 0; }
 footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -612,7 +620,7 @@ footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
     <span class="top-title" id="top-title"></span>
     <div class="top-actions">
       <a class="streak-chip" href="#settings" id="streak-chip"></a>
-      <a class="icon-btn" href="#search" id="nav-search" aria-label="Поиск слова" title="Поиск"></a>
+      <a class="icon-btn" href="#settings" id="nav-settings" aria-label="Профиль" title="Профиль"></a>
       <button class="icon-btn" id="theme-quick" aria-label="Сменить тему" title="Дневная / ночная тема"></button>
     </div>
   </div>
@@ -621,9 +629,9 @@ footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 <nav class="tabbar" aria-label="Разделы">
   <div class="tabbar-in">
     <a class="tab" href="#" id="nav-home"><span class="ti" data-icon="levels"></span><span>Уровни</span></a>
+    <a class="tab" href="#dict" id="nav-dict"><span class="ti" data-icon="dict"></span><span>Словарь</span></a>
     <a class="tab" href="#review" id="nav-review"><span class="ti" data-icon="review"><span class="badge" id="rev-badge" hidden></span></span><span>Повторение</span></a>
     <a class="tab" href="#grammar-all" id="nav-grammar"><span class="ti" data-icon="grammar"></span><span>Грамматика</span></a>
     <a class="tab" href="#texts-all" id="nav-texts"><span class="ti" data-icon="texts"></span><span>Тексты</span></a>
-    <a class="tab" href="#settings" id="nav-settings"><span class="ti" data-icon="user"></span><span>Профиль</span></a>
   </div>
 </nav>
