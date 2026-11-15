@@ -1,0 +1,145 @@
+LEVELS.find(l => l.id === "B2").sections.push(
+{ t: "Медицина и здравоохранение", w: `
+das Gesundheitswesen=здравоохранение
+die Diagnose, Diagnosen=диагноз
+das Symptom, Symptome=симптом
+der Befund, Befunde=результат обследования
+die Vorbeugung=профилактика
+der Eingriff, Eingriffe=вмешательство, операция
+die Genesung=выздоровление
+die Pflege=уход
+der Pflegeberuf, Pflegeberufe=профессия по уходу
+die Lebenserwartung=продолжительность жизни
+die Erkrankung, Erkrankungen=заболевание
+die Seuche, Seuchen=эпидемия
+der Erreger, Erreger=возбудитель
+die Abwehrkräfte=защитные силы организма
+das Übergewicht=лишний вес
+diagnostizieren=диагностировать
+vorbeugen=предупреждать, предотвращать
+sich auswirken auf=сказываться на
+erblich=наследственный
+unheilbar=неизлечимый
+`},
+{ t: "Рынок труда", w: `
+der Arbeitsmarkt=рынок труда
+der Fachkräftemangel=нехватка специалистов
+die Fachkraft, Fachkräfte=специалист
+die Erwerbstätigkeit=трудовая деятельность
+die Arbeitsbedingungen=условия труда
+der Mindestlohn, Mindestlöhne=минимальная зарплата
+die Tarifverhandlung, Tarifverhandlungen=переговоры о тарифах
+die Zeitarbeit=временная работа
+die Befristung=ограничение срока (договора)
+der Werdegang=профессиональный путь
+die Kompetenz, Kompetenzen=компетенция
+die Vereinbarkeit von Familie und Beruf=совмещение семьи и работы
+die Elternzeit=отпуск по уходу за ребёнком
+die Altersvorsorge=пенсионное обеспечение
+die Umschulung, Umschulungen=переобучение
+die Existenzgründung=открытие собственного дела
+die Leistung, Leistungen=производительность, достижение
+befristet=срочный, ограниченный по времени
+unbefristet=бессрочный
+leistungsorientiert=ориентированный на результат
+`},
+{ t: "СМИ и цифровой мир", w: `
+die Berichterstattung=освещение (в СМИ)
+die Pressefreiheit=свобода прессы
+die Zensur=цензура
+die Falschmeldung, Falschmeldungen=фейковая новость
+die Glaubwürdigkeit=достоверность
+die Reichweite=охват
+der Algorithmus, Algorithmen=алгоритм
+die Privatsphäre=частная жизнь
+der Nutzer, Nutzer=пользователь
+die Plattform, Plattformen=платформа
+der Influencer, Influencer=инфлюенсер
+die Abhängigkeit, Abhängigkeiten=зависимость
+die Überwachung=слежка, наблюдение
+der Hackerangriff, Hackerangriffe=хакерская атака
+die Meinungsfreiheit=свобода мнений
+verbreiten=распространять
+manipulieren=манипулировать
+recherchieren=проводить исследование, искать информацию
+überprüfen=проверять
+glaubwürdig=достоверный
+`},
+{ t: "Образование и общество B2", w: `
+die Chancengleichheit=равенство возможностей
+die Bildungspolitik=политика в сфере образования
+die Allgemeinbildung=общее образование, кругозор
+die Schulpflicht=обязательное школьное образование
+die Begabung, Begabungen=одарённость
+die Förderung=поддержка
+die Lernbereitschaft=готовность учиться
+die Leistungsgesellschaft=общество достижений
+der Leistungsdruck=давление ради результатов
+der Zusammenhalt=сплочённость
+das Engagement=вовлечённость
+die Toleranz=терпимость
+die Diskriminierung=дискриминация
+die Würde=достоинство
+benachteiligt=ущемлённый, в невыгодном положении
+gleichberechtigt=равноправный
+sich engagieren=участвовать, вкладываться
+`},
+{ t: "Глаголы B2: часть 2", w: `
+abwägen=взвешивать
+ableiten=выводить, производить
+anstreben=стремиться к
+aufgreifen=подхватывать (тему)
+ausgehen von=исходить из
+auseinanderhalten=различать
+beibehalten=сохранять
+beruhen auf=основываться на
+bestimmen=определять
+beziehen auf=относить к
+durchsetzen=проводить, добиваться
+einbeziehen=включать, вовлекать
+einhalten=соблюдать
+entgegenwirken=противодействовать
+erfassen=охватывать, понимать
+ermitteln=выяснять, расследовать
+festlegen=устанавливать
+gelten als=считаться
+herausfinden=выяснять
+hindeuten auf=указывать на
+nachlassen=ослабевать
+prägen=формировать, накладывать отпечаток
+schildern=описывать
+überwiegen=преобладать
+unterscheiden=различать
+verfolgen=преследовать, следить
+vorantreiben=продвигать
+wahren=сохранять, соблюдать
+zuordnen=соотносить
+zustande kommen=состояться
+`},
+{ t: "Наречия и оценки B2", d: "adv", w: `
+anscheinend=по-видимому
+offenbar=очевидно
+vermutlich=предположительно
+keineswegs=ни в коем случае
+durchaus=вполне
+weitgehend=в значительной степени
+überwiegend=преимущественно
+ausschließlich=исключительно
+gewissermaßen=в некотором роде
+schlichtweg=просто-напросто
+vorwiegend=главным образом
+nahezu=почти
+äußerst=крайне
+ohnehin=и так, всё равно
+sowieso=всё равно
+jedenfalls=во всяком случае
+immerhin=всё-таки
+mittlerweile=тем временем, уже
+zunächst=сначала
+künftig=в будущем
+bislang=до сих пор
+ehemals=прежде
+stets=всегда
+keinesfalls=ни в коем случае
+grundsätzlich=в принципе
+`});

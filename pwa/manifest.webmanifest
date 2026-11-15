@@ -1,0 +1,23 @@
+{
+  "name": "Wortweg — немецкий A0–C1",
+  "short_name": "Wortweg",
+  "description": "Немецкий от A0 до C1: 3000 слов, грамматика, тексты, интервальное повторение",
+  "lang": "ru",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0e22",
+  "theme_color": "#0b0e22",
+  "categories": ["education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Повторение", "url": "./#review", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Тексты", "url": "./#texts-all", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
