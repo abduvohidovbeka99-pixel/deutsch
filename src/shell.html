@@ -600,6 +600,8 @@ h3 { font-size: 17px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .rank-up-emb .emblem, .rank-up { animation: none !important; } }
 @media (max-width: 400px) { .top-title { display: none; } }
 
+.feature-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.feature-row .qa.feature { margin-bottom: 0; }
 footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>

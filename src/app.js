@@ -464,7 +464,8 @@
         return `<section class="pos-group"><div class="pos-head"><span class="glvl">${L.id}</span><h3>${esc(L.name)}</h3><span class="count">${d} / ${g.length}</span></div>
           <div class="trows">${g.map((t, i) => { const done = doneGrammar.has(L.id + '|' + i); return `<a class="trow ${done ? 'done' : ''}" href="#gram-${L.id}-${i}"><span class="tnum">${i + 1}</span><span class="tmain"><b>${esc(t.t)}</b><span>${esc(t.s || '')}</span></span><span class="tstat">${done ? 'пройдена' : `${(t.q || []).length} вопр.`}</span></a>`; }).join('')}</div></section>`;
       }).join('')}</div>`;
-    app.querySelector('.chips').insertAdjacentHTML('beforebegin', `<a class="qa feature" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов · таблицы 4 времён и тренажёр</small></span><span class="go">→</span></a>`);
+    const nounsN = new Set(ALL.filter(w => w.pos === 'noun').map(w => w.de)).size;
+    app.querySelector('.chips').insertAdjacentHTML('beforebegin', `<div class="feature-row"><a class="qa feature" href="#gender-all"><span class="qi">${UI.articles}</span><span>Артикли der · die · das<small>${nounsN} существительных по родам · тренажёр</small></span><span class="go">→</span></a><a class="qa feature" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов · таблицы и тренажёр</small></span><span class="go">→</span></a></div>`);
     app.querySelectorAll('[data-galvl]').forEach(b => b.onclick = () => { prefs.gaLvl = b.dataset.galvl; savePrefs(); viewGrammarAll(); });
   }
 
@@ -560,14 +561,14 @@
   // ----- род: der / die / das -----
   const genderOf = w => w.plOnly ? 'pl' : w.art;
   function viewGender(L) {
-    setNav(L ? 'home' : 'gender');
+    setNav(L ? 'home' : 'grammar');
     let words;
     if (L) words = levelWords(L).filter(w => w.pos === 'noun');
     else {
       const seen = new Set();
       words = ALL.filter(w => w.pos === 'noun' && (prefs.gLvl === 'all' || !prefs.gLvl || w.lvl === prefs.gLvl) && !seen.has(w.de) && seen.add(w.de));
     }
-    const head = L ? levelHead(L, 'r') : `<div class="stack" style="gap:6px;margin-bottom:18px"><div class="eyebrow">Все уровни</div><h1 style="font-size:clamp(24px,4vw,36px)">Артикли der, die, das</h1><p class="lead">Все существительные словаря, разделённые по роду. Тренажёр помогает запомнить артикли.</p></div>
+    const head = L ? levelHead(L, 'r') : `<a class="back" href="#grammar-all">← Грамматика</a><div class="stack" style="gap:6px;margin-bottom:18px"><div class="eyebrow">Все уровни</div><h1 style="font-size:clamp(24px,4vw,36px)">Артикли der, die, das</h1><p class="lead">Все существительные словаря, разделённые по роду. Тренажёр помогает запомнить артикли.</p></div>
       <div class="chips" style="margin-bottom:6px">${['all', ...LEVELS.map(x => x.id)].map(id => `<button class="chip ${(prefs.gLvl || 'all') === id ? 'on' : ''}" data-glvl="${id}">${id === 'all' ? 'Все уровни' : id}</button>`).join('')}</div>`;
     try { if (localStorage.getItem('ww-goto-train')) { localStorage.removeItem('ww-goto-train'); prefs.gMode = 'train'; savePrefs(); } } catch (e) {}
     const gm = prefs.gMode || 'list';
