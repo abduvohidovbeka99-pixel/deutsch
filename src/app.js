@@ -10,7 +10,7 @@
   };
   const learned = new Set(store.get('ww-learned', []));
   const doneGrammar = new Set(store.get('ww-grammar', []));
-  const prefs = Object.assign({ mode: 'list', dir: 'de', filter: 'all', theme: 'system', goal: 30, revMode: 'cards', rate: 0.9, autoSpeak: true, qCount: 10, bigRead: false }, store.get('ww-prefs', {}));
+  const prefs = Object.assign({ mode: 'list', dir: 'de', filter: 'all', theme: 'system', goal: 30, revMode: 'cards', haptics: true, rate: 0.9, autoSpeak: true, qCount: 10, bigRead: false }, store.get('ww-prefs', {}));
   const savePrefs = () => store.set('ww-prefs', prefs);
   const saveLearned = () => store.set('ww-learned', [...learned]);
 
@@ -151,7 +151,7 @@
       const href = last.kind === 'v' ? 'vocab' : last.kind === 'x' ? 'text' : 'gram';
       if (title) cont = `<a class="card continue-card" href="#${href}-${last.lvl}-${last.i}" style="text-decoration:none"><div class="eyebrow">Продолжить · ${last.lvl} · ${kindName}</div><div style="font-weight:800;font-size:19px">${esc(title)}</div><span class="btn primary" style="align-self:flex-start">Открыть →</span></a>`;
     }
-    if (!cont) cont = `<a class="card" href="#level-A0" style="text-decoration:none"><div class="eyebrow">С чего начать</div><div style="font-weight:800;font-size:19px">Уровень A0 · Старт</div><span class="muted" style="font-size:14px">Приветствия, числа, семья и первые глаголы.</span><span class="btn primary" style="align-self:flex-start">Начать →</span></a>`;
+    if (!cont) { const SL = lvlById(prefs.startLvl || 'A0') || LEVELS[0]; cont = `<a class="card continue-card" href="#level-${SL.id}" style="text-decoration:none"><div class="eyebrow">С чего начать</div><div style="font-weight:800;font-size:19px">Уровень ${SL.id} · ${esc(SL.name)}</div><span class="muted" style="font-size:14px">${esc(SL.desc)}</span><span class="btn primary" style="align-self:flex-start">Начать →</span></a>`; }
     const day = Math.floor(Date.now() / 864e5);
     const pool = ALL.filter(w => w.pos === 'noun' || w.pos === 'verb' || w.pos === 'adj');
     const wod = pool[(day * 7919) % pool.length];
@@ -183,9 +183,9 @@
       </div>
       <div class="quick">
         <a class="qa" href="#gender-all" onclick="try{localStorage.setItem('ww-goto-train','1')}catch(e){}"><span class="qi">${UI.articles}</span><span>Тренажёр артиклей<small>der · die · das</small></span></a>
-        <a class="qa" href="#grammar-all"><span class="qi">${UI.grammar}</span><span>Грамматика<small>${gTotal} тем с тестами</small></span></a>
-        <a class="qa" href="#texts-all"><span class="qi">${UI.texts}</span><span>Тексты<small>${tTotal} текстов</small></span></a>
-        <a class="qa" href="#search"><span class="qi">${UI.search}</span><span>Поиск слова<small>${total} слов</small></span></a>
+        <a class="qa" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов</small></span></a>
+        <a class="qa" href="#placement"><span class="qi">${UI.search}</span><span>Тест на уровень<small>${prefs.placed ? 'ваш уровень: ' + prefs.placed : '5 минут'}</small></span></a>
+        <a class="qa" href="#texts-all"><span class="qi">${UI.texts}</span><span>Тексты<small>${tTotal} текстов с тестами</small></span></a>
       </div>
       <h2 style="margin-bottom:14px">Уровни</h2>
       <div class="levels">
@@ -213,6 +213,7 @@
     const sw = (key, id) => `<label class="switch"><input type="checkbox" id="${id}" data-toggle="${key}" ${prefs[key] ? 'checked' : ''}><i></i></label>`;
     app.innerHTML = `<div class="stack" style="gap:6px;margin-bottom:20px"><div class="eyebrow">Ваш прогресс и настройки</div><h1 style="font-size:clamp(26px,4.5vw,38px)">Профиль</h1></div>
       ${profileStats()}
+      ${achHtml()}
       <section class="set-group"><h2>Цель дня</h2>
         <div class="set-card"><div class="set-row"><div class="lbl"><b>Сколько XP в день</b><span>XP дают ответы в тестах, карточках, письме, грамматике и текстах. Серия растёт, если вы занимались хотя бы немного.</span></div>${seg('goal', [[10, 'Лёгкая 10'], [30, 'Обычная 30'], [50, 'Серьёзная 50'], [100, 'Интенсив 100']])}</div></div>
       </section>
@@ -230,6 +231,7 @@
       <section class="set-group"><h2>Озвучка</h2>
         <div class="set-card">
           <div class="set-row"><div class="lbl"><b>Скорость речи</b><span>${hasVoice ? 'Немецкий голос найден' : 'Немецкий голос в этом браузере не найден, озвучка может не работать'}</span></div>${seg('rate', [[0.7, 'Медленно'], [0.9, 'Обычно'], [1.05, 'Быстро']])}</div>
+          <div class="set-row"><div class="lbl"><b>Вибрация при ответе</b><span>Короткий отклик на телефоне: верно или ошибка</span></div>${sw('haptics', 'set-haptics')}</div>
           <div class="set-row"><div class="lbl"><b>Произносить слово в тесте</b><span>Автоматически при показе вопроса DE → RU</span></div>${sw('autoSpeak', 'set-autospeak')}</div>
           <div class="set-row"><div class="lbl"><b>Проверить голос</b><span>«Guten Tag! Willkommen bei Wortweg.»</span></div><button class="btn" id="voice-test">${icon.speak.replace('<svg', '<svg style="width:15px;height:15px;vertical-align:-2px;margin-right:6px"')}Прослушать</button></div>
         </div>
@@ -237,6 +239,8 @@
       <section class="set-group"><h2>Обучение</h2>
         <div class="set-card">
           <div class="set-row"><div class="lbl"><b>Вопросов в тесте по словам</b><span>Сколько слов спрашивать за один тест</span></div>${seg('qCount', [[10, '10'], [20, '20'], [30, '30']])}</div>
+          <div class="set-row"><div class="lbl"><b>Тест на уровень</b><span>${prefs.placed ? 'Ваш результат: ' + prefs.placed + '. Можно пройти ещё раз.' : '5 минут, подберём уровень для старта'}</span></div><a class="btn" style="text-decoration:none" href="#placement">${prefs.placed ? 'Пройти снова' : 'Пройти'}</a></div>
+          <div class="set-row"><div class="lbl"><b>Знакомство с приложением</b><span>Показать приветственные экраны ещё раз</span></div><button class="btn" id="re-onb">Показать</button></div>
           <div class="set-row"><div class="lbl"><b>Направление по умолчанию</b><span>Для карточек и тестов</span></div>${seg('dir', [['de', 'DE → RU'], ['ru', 'RU → DE']])}</div>
         </div>
       </section>
@@ -268,6 +272,7 @@
     app.querySelectorAll('[data-set]').forEach(b => b.onclick = () => { const v = b.dataset.val; prefs[b.dataset.set] = isNaN(+v) ? v : +v; savePrefs(); updateTopStats(); viewSettings(); });
     app.querySelectorAll('[data-toggle]').forEach(c => c.onchange = () => { prefs[c.dataset.toggle] = c.checked; savePrefs(); applyTheme(); });
     document.getElementById('voice-test').onclick = () => speak('Guten Tag! Willkommen bei Wortweg.');
+    document.getElementById('re-onb').onclick = () => onboarding();
     const ioRow = document.getElementById('io-row'), ioText = document.getElementById('io-text'), ioMsg = document.getElementById('io-msg'), impApply = document.getElementById('imp-apply');
     const dump = () => { const data = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('ww-')) data[k] = localStorage.getItem(k); } } catch (e) {} return JSON.stringify({ app: 'wortweg', version: 1, saved: new Date().toISOString(), data }); };
     const tryParse = txt => { try { const o = JSON.parse(txt); if (o && o.app === 'wortweg' && o.data && typeof o.data === 'object') return o; } catch (e) {} return null; };
@@ -421,7 +426,7 @@
         const check = () => {
           if (!inp.value.trim() || inp.disabled) return;
           const ok = answerOk(inp.value, q[2]);
-          if (ok) { right++; addXP(3); }
+          buzz(ok); if (ok) { right++; addXP(3); }
           inp.disabled = true; btn.disabled = true;
           inp.classList.add(ok ? 'right' : 'wrong');
           why.hidden = false;
@@ -435,6 +440,7 @@
         card.querySelectorAll('.opt').forEach(b => b.onclick = () => {
           const k = +b.dataset.k;
           card.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (+x.dataset.k === correct) x.classList.add('right'); });
+          buzz(k === correct);
           if (k !== correct) b.classList.add('wrong'); else { right++; addXP(3); }
           finish();
         });
@@ -456,6 +462,7 @@
         return `<section class="pos-group"><div class="pos-head"><span class="glvl">${L.id}</span><h3>${esc(L.name)}</h3><span class="count">${d} / ${g.length}</span></div>
           <div class="trows">${g.map((t, i) => { const done = doneGrammar.has(L.id + '|' + i); return `<a class="trow ${done ? 'done' : ''}" href="#gram-${L.id}-${i}"><span class="tnum">${i + 1}</span><span class="tmain"><b>${esc(t.t)}</b><span>${esc(t.s || '')}</span></span><span class="tstat">${done ? 'пройдена' : `${(t.q || []).length} вопр.`}</span></a>`; }).join('')}</div></section>`;
       }).join('')}</div>`;
+    app.querySelector('.chips').insertAdjacentHTML('beforebegin', `<a class="qa feature" href="#verbs"><span class="qi">${UI.grammar}</span><span>Спряжение глаголов<small>${VERBS.length} глаголов · таблицы 4 времён и тренажёр</small></span><span class="go">→</span></a>`);
     app.querySelectorAll('[data-galvl]').forEach(b => b.onclick = () => { prefs.gaLvl = b.dataset.galvl; savePrefs(); viewGrammarAll(); });
   }
 
@@ -592,7 +599,7 @@
     const next = () => trainArticle(box, st);
     box.querySelectorAll('.art-btn').forEach(b => b.onclick = () => {
       const ok = b.dataset.a === w.art;
-      st.total++; if (ok) { addXP(1); st.score++; st.streak++; st.best = Math.max(st.best, st.streak); } else st.streak = 0;
+      st.total++; buzz(ok); if (ok) { addXP(1); bump('articleOk'); st.score++; st.streak++; st.best = Math.max(st.best, st.streak); } else st.streak = 0;
       box.querySelectorAll('.art-btn').forEach(x => { x.disabled = true; if (x.dataset.a === w.art) x.classList.add('right'); });
       if (!ok) b.classList.add('wrong');
       document.getElementById('tw').innerHTML = wordHtml(w);
@@ -634,7 +641,7 @@
       <div class="counter">${idx + 1} / ${deck.length}</div>
       <div class="flash" id="flash" tabindex="0" role="button" aria-label="Перевернуть карточку">
         <div><div class="big">${front}</div>${flipped ? `<div class="ans">${back}</div>` : ''}</div>
-        <div class="hint">${flipped ? 'Клавиши: 1 — не знаю, 2 — знаю' : 'Нажмите или пробел — перевернуть'}</div>
+        <div class="hint">${flipped ? 'Свайп вправо — знаю, влево — не знаю' : 'Нажмите, чтобы перевернуть · свайп вправо/влево'}</div>
       </div>
       <div class="row" style="justify-content:center">
         <button class="ico" data-speak="${esc(wordPlain(w))}" aria-label="Произнести">${icon.speak}</button>
@@ -645,11 +652,12 @@
     const flip = () => renderCards(box, deck, idx, !flipped);
     const fl = document.getElementById('flash');
     fl.onclick = flip; fl.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } };
-    const no = () => { srsRate(w, 0); addXP(1); deck.push(w); renderCards(box, deck, idx + 1, false); };
-    const yes = () => { srsRate(w, srs[w.id] && srs[w.id].b >= 2 ? 3 : 2); learned.add(w.id); saveLearned(); addXP(1); updateCount(); renderCards(box, deck, idx + 1, false); };
+    const no = () => { buzz(false); srsRate(w, 0); addXP(1); deck.push(w); renderCards(box, deck, idx + 1, false); };
+    const yes = () => { buzz(true); srsRate(w, srs[w.id] && srs[w.id].b >= 2 ? 3 : 2); learned.add(w.id); saveLearned(); addXP(1); updateCount(); renderCards(box, deck, idx + 1, false); };
     document.getElementById('c-no').onclick = no;
     document.getElementById('c-yes').onclick = yes;
     keys = { Space: flip, '1': no, '2': yes, ArrowLeft: no, ArrowRight: yes };
+    swipe(fl, no, yes);
   }
 
   function startTest(box, pool, L) {
@@ -682,6 +690,7 @@
     box.querySelectorAll('.opt').forEach(b => b.onclick = () => {
       if (!box.querySelector('#next-row').hidden) return;
       const ok = opts[+b.dataset.k] === right;
+      buzz(ok);
       if (ok) { st.score++; addXP(2); if (!srs[w.id]) srsRate(w, 2); } else srsRate(w, 0);
       box.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (opts[+x.dataset.k] === right) x.classList.add('right'); });
       if (!ok) b.classList.add('wrong');
@@ -717,6 +726,7 @@
       card.querySelectorAll('.opt').forEach(b => b.onclick = () => {
         const k = +b.dataset.k;
         card.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (+x.dataset.k === q[2]) x.classList.add('right'); });
+        buzz(k === q[2]);
         if (k !== q[2]) b.classList.add('wrong'); else { right++; addXP(3); }
         answered++;
         const why = card.querySelector('.why'); if (why.textContent) why.hidden = false;
@@ -770,6 +780,9 @@
     const d = dayNum(), before = activity[d] || 0;
     activity[d] = before + n;
     store.set('ww-activity', activity);
+    xpFloat(n);
+    if (before < prefs.goal && activity[d] >= prefs.goal) { bump('goals'); confetti(); }
+    checkAch();
     if (before < prefs.goal && activity[d] >= prefs.goal) toast(`${UI.flame}<span><b>Цель дня выполнена!</b> ${activity[d]} XP · серия ${streakDays()} ${plural(streakDays(), 'день', 'дня', 'дней')}</span>`, 3500);
     updateTopStats();
   }
@@ -881,7 +894,7 @@
     const finish = r => {
       res = r;
       inp.disabled = true; document.getElementById('w-check').disabled = true; document.getElementById('w-skip').disabled = true;
-      inp.classList.add(r.q >= 1 ? 'right' : 'wrong');
+      inp.classList.add(r.q >= 1 ? 'right' : 'wrong'); buzz(r.q >= 1);
       const msg = document.getElementById('w-msg'); msg.hidden = false;
       msg.innerHTML = `<span class="${r.q >= 1 ? 'ok' : 'bad'}">${r.q === 2 ? 'Верно!' : r.q === 1 ? 'Почти.' : 'Ошибка.'}</span> ${r.q === 2 ? esc(targetOf(w)) : r.msg.replace(/^(Верно!|Почти!?|Неверно\.)\s*/, '')}`;
       speak(wordPlain(w));
@@ -916,6 +929,7 @@
     };
     const rate = (w, q) => {
       if (opts.srs !== false) srsRate(w, q);
+      bump('reviews'); if (mode === 'write' && q >= 1) bump('writeOk'); buzz(q >= 1);
       tally[q]++; shown++;
       const gain = q === 0 ? 1 : mode === 'write' ? 3 : 2;
       xp += gain; addXP(gain);
@@ -930,7 +944,7 @@
       box.innerHTML = `<div class="card-stage">${head()}
         <div class="flash ${open ? 'open' : ''}" id="flash" tabindex="0" role="button" aria-label="Показать ответ">
           <div><div class="big">${front}</div>${open ? `<div class="ans">${back}</div>` : ''}${!c || !c.r ? '<div class="new-tag">новое слово</div>' : ''}</div>
-          <div class="hint">${open ? 'Насколько легко было вспомнить?' : 'Пробел или нажатие — показать ответ'}</div>
+          <div class="hint">${open ? 'Свайп вправо — «Хорошо», влево — «Снова»' : 'Нажмите, чтобы увидеть ответ'}</div>
         </div>
         ${open ? `<div class="rate">
           <button class="rate-b r0" data-q="0"><b>Снова</b><span>${lbl(0)}</span></button>
@@ -947,6 +961,7 @@
         if (deFirst && prefs.autoSpeak) speak(wordPlain(w));
       } else {
         box.querySelectorAll('.rate-b').forEach(b => b.onclick = () => rate(w, +b.dataset.q));
+        swipe(document.getElementById('flash'), () => rate(w, 0), () => rate(w, 2));
         keys = { '1': () => rate(w, 0), '2': () => rate(w, 1), '3': () => rate(w, 2), '4': () => rate(w, 3), Space: () => rate(w, 2) };
       }
     };
@@ -1080,6 +1095,318 @@
       </div></section>`;
   }
 
+  // =====================================================================
+  // Вибрация и счётчики
+  // =====================================================================
+  const counters = store.get('ww-stats', {});
+  function bump(k, n) { counters[k] = (counters[k] || 0) + (n || 1); store.set('ww-stats', counters); }
+  function buzz(ok) { if (!prefs.haptics) return; try { navigator.vibrate && navigator.vibrate(ok ? 12 : [30, 40, 30]); } catch (e) {} }
+
+  // =====================================================================
+  // Конфетти и всплывающий +XP
+  // =====================================================================
+  const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  function confetti() {
+    if (reduceMotion()) return;
+    const c = document.createElement('canvas');
+    c.className = 'confetti'; document.body.appendChild(c);
+    const W = c.width = innerWidth * devicePixelRatio, H = c.height = innerHeight * devicePixelRatio;
+    const ctx = c.getContext('2d');
+    const colors = ['#8f63ff', '#6fa8ff', '#ff7ac0', '#4fe0b0', '#ffd166', '#ffffff'];
+    const parts = Array.from({ length: 140 }, () => ({ x: W / 2 + (Math.random() - .5) * W * .3, y: H * .35, vx: (Math.random() - .5) * 26 * devicePixelRatio, vy: (-Math.random() * 22 - 8) * devicePixelRatio, r: (4 + Math.random() * 6) * devicePixelRatio, c: colors[(Math.random() * colors.length) | 0], a: Math.random() * 6, va: (Math.random() - .5) * .4 }));
+    let f = 0;
+    (function tick() {
+      ctx.clearRect(0, 0, W, H);
+      parts.forEach(p => { p.vy += .9 * devicePixelRatio; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.a += p.va; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 3, p.r, p.r * .66); ctx.restore(); });
+      if (++f < 120) requestAnimationFrame(tick); else c.remove();
+    })();
+  }
+  function xpFloat(n) {
+    if (reduceMotion()) return;
+    const chip = document.getElementById('streak-chip'); if (!chip) return;
+    const r = chip.getBoundingClientRect();
+    const el = document.createElement('div'); el.className = 'xp-float'; el.textContent = '+' + n + ' XP';
+    el.style.left = (r.left + r.width / 2) + 'px'; el.style.top = (r.bottom + 4) + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
+    chip.classList.remove('pulse'); void chip.offsetWidth; chip.classList.add('pulse');
+  }
+
+  // =====================================================================
+  // Достижения
+  // =====================================================================
+  const levelDone = id => { const ws = levelWords(lvlById(id)); return ws.length && countLearned(ws) === ws.length; };
+  const ACH = [
+    { id: 'w1', ic: 'levels', t: 'Первые шаги', d: 'Выучите первое слово', v: () => learned.size, n: 1 },
+    { id: 'w50', ic: 'levels', t: 'Словарный запас', d: 'Выучите 50 слов', v: () => learned.size, n: 50 },
+    { id: 'w250', ic: 'levels', t: 'Полиглот в пути', d: 'Выучите 250 слов', v: () => learned.size, n: 250 },
+    { id: 'w1000', ic: 'levels', t: 'Тысяча слов', d: 'Выучите 1000 слов', v: () => learned.size, n: 1000 },
+    { id: 'w3000', ic: 'levels', t: 'Весь словарь', d: 'Выучите 3000 слов', v: () => learned.size, n: 3000 },
+    { id: 's3', ic: 'flame', t: 'Разогрев', d: 'Серия 3 дня', v: () => streakDays(), n: 3 },
+    { id: 's7', ic: 'flame', t: 'Неделя подряд', d: 'Серия 7 дней', v: () => streakDays(), n: 7 },
+    { id: 's30', ic: 'flame', t: 'Месяц без пропусков', d: 'Серия 30 дней', v: () => streakDays(), n: 30 },
+    { id: 's100', ic: 'flame', t: 'Железная воля', d: 'Серия 100 дней', v: () => streakDays(), n: 100 },
+    { id: 'goal', ic: 'bolt', t: 'Цель дня', d: 'Выполните цель дня', v: () => counters.goals || 0, n: 1 },
+    { id: 'goal10', ic: 'bolt', t: 'Целеустремлённость', d: 'Выполните цель дня 10 раз', v: () => counters.goals || 0, n: 10 },
+    { id: 'xp1000', ic: 'bolt', t: 'Тысяча XP', d: 'Наберите 1000 XP', v: () => totalXP(), n: 1000 },
+    { id: 'rev100', ic: 'review', t: 'Память как сталь', d: '100 повторений по расписанию', v: () => counters.reviews || 0, n: 100 },
+    { id: 'write50', ic: 'texts', t: 'Пишу без ошибок', d: '50 верных письменных ответов', v: () => counters.writeOk || 0, n: 50 },
+    { id: 'art100', ic: 'articles', t: 'Der, die, das', d: '100 верных артиклей', v: () => counters.articleOk || 0, n: 100 },
+    { id: 'verb50', ic: 'grammar', t: 'Спряжение', d: '50 верных форм глаголов', v: () => counters.verbOk || 0, n: 50 },
+    { id: 'g5', ic: 'grammar', t: 'Грамматик', d: 'Пройдите 5 тем грамматики', v: () => doneGrammar.size, n: 5 },
+    { id: 'gall', ic: 'grammar', t: 'Вся грамматика', d: 'Пройдите все темы грамматики', v: () => doneGrammar.size, n: Object.values(GRAMMAR).reduce((a, b) => a + b.length, 0) },
+    { id: 't1', ic: 'texts', t: 'Первый текст', d: 'Прочитайте текст на 80%+', v: () => Object.values(textScores).filter(x => x >= 80).length, n: 1 },
+    { id: 't20', ic: 'texts', t: 'Читатель', d: 'Прочитайте 20 текстов', v: () => Object.values(textScores).filter(x => x >= 80).length, n: 20 },
+    { id: 'tall', ic: 'texts', t: 'Книжный червь', d: 'Прочитайте все тексты', v: () => Object.values(textScores).filter(x => x >= 80).length, n: Object.values(TEXTS).reduce((a, b) => a + b.length, 0) },
+    { id: 'place', ic: 'search', t: 'Знаю свой уровень', d: 'Пройдите тест на уровень', v: () => prefs.placed ? 1 : 0, n: 1 },
+    ...LEVELS.map(L => ({ id: 'lvl' + L.id, ic: 'levels', t: 'Уровень ' + L.id, d: 'Выучите все слова уровня ' + L.id, v: () => countLearned(levelWords(L)), n: levelWords(L).length }))
+  ];
+  const achieved = new Set(store.get('ww-ach', []));
+  let achReady = false;
+  function checkAch() {
+    const fresh = ACH.filter(a => !achieved.has(a.id) && a.v() >= a.n);
+    if (!fresh.length) return;
+    fresh.forEach(a => achieved.add(a.id));
+    store.set('ww-ach', [...achieved]);
+    if (achReady) { const a = fresh[0]; toast(`<span class="ach-ico on">${UI[a.ic]}</span><span><b>Достижение: ${esc(a.t)}</b><br><span class="muted">${esc(a.d)}</span></span>`, 3800); }
+  }
+  function achHtml() {
+    const n = ACH.filter(a => achieved.has(a.id)).length;
+    return `<section class="set-group"><div class="row" style="justify-content:space-between"><h2>Достижения</h2><span class="pct">${n} из ${ACH.length}</span></div>
+      <div class="ach-grid">${ACH.map(a => { const on = achieved.has(a.id), v = Math.min(a.v(), a.n); return `<div class="ach ${on ? 'on' : ''}" title="${esc(a.d)}"><span class="ach-ico ${on ? 'on' : ''}">${UI[a.ic]}</span><b>${esc(a.t)}</b><span>${esc(a.d)}</span>${on ? '<span class="ach-done">получено</span>' : `<div class="bar"><i style="width:${pct(v, a.n)}%"></i></div><span class="ach-num">${v} / ${a.n}</span>`}</div>`; }).join('')}</div></section>`;
+  }
+
+  // =====================================================================
+  // Свайпы карточек
+  // =====================================================================
+  function swipe(el, onLeft, onRight) {
+    if (!el) return;
+    let x0 = null, y0 = 0, dx = 0, moved = false;
+    el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; x0 = e.clientX; y0 = e.clientY; dx = 0; moved = false; });
+    el.addEventListener('pointermove', e => {
+      if (x0 === null) return;
+      dx = e.clientX - x0;
+      if (!moved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(e.clientY - y0)) { moved = true; try { el.setPointerCapture(e.pointerId); } catch (er) {} }
+      if (!moved) return;
+      el.style.transition = 'none';
+      el.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
+      el.classList.toggle('sw-right', dx > 40); el.classList.toggle('sw-left', dx < -40);
+    });
+    const end = () => {
+      if (x0 === null) return;
+      x0 = null;
+      el.style.transition = '';
+      if (moved && Math.abs(dx) > 90) {
+        el.style.transform = `translateX(${dx > 0 ? 600 : -600}px) rotate(${dx > 0 ? 20 : -20}deg)`;
+        el.style.opacity = '0';
+        setTimeout(() => (dx > 0 ? onRight : onLeft)(), 160);
+      } else { el.style.transform = ''; el.classList.remove('sw-right', 'sw-left'); }
+    };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    el.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
+  }
+
+  // =====================================================================
+  // Спряжение глаголов
+  // =====================================================================
+  const PRON = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
+  const AUX = { h: ['habe', 'hast', 'hat', 'haben', 'habt', 'haben'], s: ['bin', 'bist', 'ist', 'sind', 'seid', 'sind'] };
+  const WERD = ['werde', 'wirst', 'wird', 'werden', 'werdet', 'werden'];
+  const VERB_GROUPS = { m: 'Модальные и особые', s: 'Сильные и неправильные', t: 'С отделяемой приставкой', w: 'Слабые (правильные)' };
+  const VERBS = (window.VERBS || '').trim().split('\n').map((line, i) => {
+    const [g, rest] = line.split('|');
+    const [infRaw, ru, aux, part, prat, du, er, full] = rest.split(';');
+    const sep = infRaw.includes('·') ? infRaw.split('·') : null;
+    const pre = sep ? sep[0] : '', base = sep ? sep[1] : infRaw, inf = pre + base;
+    const ernEln = /(ern|eln)$/.test(base);
+    const stem = ernEln ? base.slice(0, -1) : base.replace(/e?n$/, '');
+    const E = /([td]|chn|[^aeiouäöülrh][mn])$/.test(stem);
+    const sib = s => /(s|ß|z|x)$/.test(s);
+    let pres;
+    if (full) pres = full.split(',');
+    else pres = [
+      /eln$/.test(base) ? stem.replace(/el$/, 'le') : stem + 'e',
+      du || (sib(stem) ? stem + 't' : E ? stem + 'est' : stem + 'st'),
+      er || (E ? stem + 'et' : stem + 't'),
+      ernEln ? base : stem + 'en',
+      E ? stem + 'et' : stem + 't',
+      ernEln ? base : stem + 'en'
+    ];
+    const p = prat || (stem + (E ? 'ete' : 'te'));
+    const pret = /e$/.test(p) ? [p, p + 'st', p, p + 'n', p + 't', p + 'n']
+      : [p, p + (sib(p) || /[td]$/.test(p) ? 'est' : 'st'), p, p + 'en', p + (/[td]$/.test(p) ? 'et' : 't'), p + 'en'];
+    const noGe = /^(be|ge|er|ver|zer|ent|emp|miss)/.test(base) || /ieren$/.test(base);
+    const pt = part || (pre + (noGe ? '' : 'ge') + stem + (E ? 'et' : 't'));
+    const withPre = f => sep ? f + ' ' + pre : f;
+    return {
+      i, g, inf, show: sep ? pre + '|' + base : inf, ru, aux: aux || 'h', part: pt,
+      forms: {
+        'Präsens': pres.map(withPre),
+        'Präteritum': pret.map(withPre),
+        'Perfekt': AUX[aux || 'h'].map(a => a + ' ' + pt),
+        'Futur I': WERD.map(w => w + ' ' + inf)
+      }
+    };
+  });
+  const TENSES = ['Präsens', 'Präteritum', 'Perfekt', 'Futur I'];
+  const TENSE_RU = { 'Präsens': 'настоящее', 'Präteritum': 'простое прошедшее', 'Perfekt': 'разговорное прошедшее', 'Futur I': 'будущее' };
+  const verbTitle = v => v.show.includes('|') ? `<span class="vpre">${esc(v.show.split('|')[0])}</span>${esc(v.show.split('|')[1])}` : esc(v.inf);
+
+  function viewVerbs() {
+    setNav('grammar');
+    const vm = prefs.verbMode || 'list';
+    const grp = prefs.verbGroup || 'all';
+    const list = VERBS.filter(v => grp === 'all' || v.g === grp);
+    app.innerHTML = `<a class="back" href="#grammar-all">← Грамматика</a>
+      <div class="stack" style="gap:6px;margin-bottom:16px"><div class="eyebrow">${VERBS.length} глаголов · 4 времени</div><h1 style="font-size:clamp(26px,4.5vw,38px)">Спряжение глаголов</h1><p class="lead">Таблицы Präsens, Präteritum, Perfekt и Futur I для самых нужных глаголов и тренажёр форм.</p></div>
+      <div class="toolbar" style="margin-top:0"><div class="seg"><button data-vm="list" class="${vm === 'list' ? 'on' : ''}">Таблицы</button><button data-vm="train" class="${vm === 'train' ? 'on' : ''}">Тренажёр</button></div></div>
+      <div class="chips">${[['all', 'Все'], ...Object.entries(VERB_GROUPS)].map(([k, n]) => `<button class="chip ${grp === k ? 'on' : ''}" data-vg="${k}">${n} <span class="count">${k === 'all' ? VERBS.length : VERBS.filter(v => v.g === k).length}</span></button>`).join('')}</div>
+      <div id="vbox"></div>`;
+    app.querySelectorAll('[data-vm]').forEach(b => b.onclick = () => { prefs.verbMode = b.dataset.vm; savePrefs(); viewVerbs(); });
+    app.querySelectorAll('[data-vg]').forEach(b => b.onclick = () => { prefs.verbGroup = b.dataset.vg; savePrefs(); viewVerbs(); });
+    const box = document.getElementById('vbox');
+    if (vm === 'list') {
+      box.innerHTML = `<input id="vq" class="search-in" type="search" placeholder="Найти глагол: fahren или ехать" autocomplete="off" style="margin-bottom:12px"><div class="trows" id="vlist"></div>`;
+      const draw = () => {
+        const q = normAns(document.getElementById('vq').value || '');
+        const items = list.filter(v => !q || normAns(v.inf).includes(q) || v.ru.toLowerCase().includes(q));
+        document.getElementById('vlist').innerHTML = items.map(v => `<a class="trow" href="#verb-${v.i}"><span class="tnum">${v.aux === 's' ? 'ist' : 'hat'}</span><span class="tmain"><b>${verbTitle(v)}</b><span>${esc(v.ru)} · ${esc(v.forms['Präsens'][2])} · ${esc(v.forms['Präteritum'][0])} · ${v.aux === 's' ? 'ist' : 'hat'} ${esc(v.part)}</span></span><span class="tstat">${VERB_GROUPS[v.g].split(' ')[0]}</span></a>`).join('') || '<div class="empty">Ничего не найдено.</div>';
+      };
+      document.getElementById('vq').oninput = draw; draw();
+    } else verbTrainer(box, list, { ok: 0, n: 0, streak: 0 });
+  }
+
+  function viewVerb(i) {
+    const v = VERBS[i]; if (!v) return viewVerbs();
+    setNav('grammar');
+    app.innerHTML = `<a class="back" href="#verbs">← Все глаголы</a>
+      <div class="stack" style="gap:6px;margin-bottom:16px"><div class="eyebrow">${VERB_GROUPS[v.g]} · Perfekt с ${v.aux === 's' ? 'sein' : 'haben'}</div>
+      <div class="row" style="flex-wrap:nowrap;gap:12px"><button class="ico" data-speak="${esc(v.inf)}" aria-label="Произнести">${icon.speak}</button><h1 style="font-size:clamp(28px,5vw,42px)">${verbTitle(v)}</h1></div><p class="lead">${esc(v.ru)}</p></div>
+      <div class="three-forms"><div><span>Infinitiv</span><b>${esc(v.inf)}</b></div><div><span>Präteritum</span><b>${esc(v.forms['Präteritum'][0])}</b></div><div><span>Partizip II</span><b>${v.aux === 's' ? 'ist' : 'hat'} ${esc(v.part)}</b></div></div>
+      <div class="conj-grid">${TENSES.map(t => `<section class="conj"><div class="conj-h"><b>${t}</b><span>${TENSE_RU[t]}</span></div>${v.forms[t].map((f, k) => `<div class="conj-r"><span class="pr">${PRON[k]}</span><b>${esc(f)}</b><button class="ico sm" data-speak="${esc(PRON[k].split('/')[0] + ' ' + f)}" aria-label="Произнести">${icon.speak}</button></div>`).join('')}</section>`).join('')}</div>
+      <div class="row" style="justify-content:space-between;margin-top:22px">${i > 0 ? `<a class="btn" style="text-decoration:none" href="#verb-${i - 1}">← ${esc(VERBS[i - 1].inf)}</a>` : '<span></span>'}${i < VERBS.length - 1 ? `<a class="btn" style="text-decoration:none" href="#verb-${i + 1}">${esc(VERBS[i + 1].inf)} →</a>` : ''}</div>`;
+  }
+
+  function verbTrainer(box, list, st) {
+    const tenses = prefs.verbTenses || ['Präsens', 'Präteritum', 'Perfekt'];
+    const v = list[Math.floor(Math.random() * list.length)];
+    const t = tenses[Math.floor(Math.random() * tenses.length)];
+    const k = Math.floor(Math.random() * 6);
+    const want = v.forms[t][k];
+    box.innerHTML = `<div class="chips" style="margin-bottom:10px">${TENSES.map(x => `<button class="chip ${tenses.includes(x) ? 'on' : ''}" data-vt="${x}">${x}</button>`).join('')}</div>
+      <div class="quiz">
+        <div class="counter" style="text-align:center">Верно ${st.ok} из ${st.n} · серия ${st.streak}</div>
+        <div class="q-word"><div>${esc(PRON[k])} · ${verbTitle(v)}</div><div class="q-hint">${t} · ${esc(v.ru)}</div></div>
+        <div class="in-row"><input class="ans-in big" id="v-in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${t === 'Perfekt' ? 'например: habe gemacht' : 'форма глагола'}"><button class="btn primary" id="v-check">Проверить</button></div>
+        <div class="umlauts">${['ä', 'ö', 'ü', 'ß'].map(c => `<button class="btn" data-ch="${c}">${c}</button>`).join('')}<button class="btn" id="v-skip">Показать</button></div>
+        <p class="why" id="v-msg" hidden></p>
+        <div class="row" style="justify-content:center" id="v-next-row" hidden><a class="btn" id="v-table" style="text-decoration:none" href="#verb-${v.i}">Таблица</a><button class="btn primary" id="v-next">Дальше →</button></div>
+      </div>`;
+    box.querySelectorAll('[data-vt]').forEach(b => b.onclick = () => { let s = tenses.slice(); s = s.includes(b.dataset.vt) ? s.filter(x => x !== b.dataset.vt) : [...s, b.dataset.vt]; if (!s.length) return; prefs.verbTenses = s; savePrefs(); verbTrainer(box, list, st); });
+    const inp = document.getElementById('v-in');
+    try { inp.focus({ preventScroll: true }); } catch (e) {}
+    box.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => { const s = inp.selectionStart ?? inp.value.length; inp.value = inp.value.slice(0, s) + b.dataset.ch + inp.value.slice(inp.selectionEnd ?? s); inp.focus(); inp.setSelectionRange(s + 1, s + 1); });
+    let done = false;
+    const next = () => verbTrainer(box, list, st);
+    const finish = ok => {
+      done = true; st.n++;
+      if (ok) { st.ok++; st.streak++; addXP(2); bump('verbOk'); } else st.streak = 0;
+      buzz(ok);
+      inp.disabled = true; inp.classList.add(ok ? 'right' : 'wrong');
+      const m = document.getElementById('v-msg'); m.hidden = false;
+      m.innerHTML = ok ? `<span class="ok">Верно!</span> ${esc(PRON[k].split('/')[0])} ${esc(want)}` : `<span class="bad">Неверно.</span> Правильно: <b>${esc(PRON[k].split('/')[0])} ${esc(want)}</b>`;
+      speak(PRON[k].split('/')[0] + ' ' + want);
+      document.getElementById('v-next-row').hidden = false;
+      document.getElementById('v-next').onclick = next; document.getElementById('v-next').focus();
+      keys = { Enter: next };
+    };
+    const check = () => {
+      if (done) return next();
+      let u = normAns(inp.value); if (!u) return;
+      u = u.replace(/^(ich|du|er|sie|es|wir|ihr) /, '');
+      finish(u === normAns(want));
+    };
+    document.getElementById('v-check').onclick = check;
+    document.getElementById('v-skip').onclick = () => { if (!done) finish(false); };
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); check(); } };
+  }
+
+  // =====================================================================
+  // Тест на уровень
+  // =====================================================================
+  function viewPlacement() {
+    setNav('home');
+    app.innerHTML = `<div class="stack" style="gap:6px;margin-bottom:18px"><div class="eyebrow">Около 5 минут</div><h1 style="font-size:clamp(26px,4.5vw,38px)">Тест на уровень</h1><p class="lead">Начинаем с простого. На каждом уровне 5 вопросов: слова и грамматика. Если ответили верно хотя бы на 4, переходим к следующему уровню. Не угадывайте: если не знаете, нажмите «Не знаю».</p></div><div id="pbox"></div>`;
+    const box = document.getElementById('pbox');
+    let li = 0, qi = 0, right = 0, total = 0, qs = [];
+    const makeQs = L => {
+      const ws = shuffle(levelWords(L).filter(w => w.pos !== 'phrase'));
+      const vocab = ws.slice(0, 4).map((w, j) => {
+        const deRu = j % 2 === 0;
+        const ans = deRu ? w.ru : wordPlain(w);
+        const others = [...new Set(ws.slice(4).map(x => deRu ? x.ru : wordPlain(x)).filter(x => x !== ans))].slice(0, 3);
+        return { q: deRu ? wordHtml(w) : esc(w.ru), hint: deRu ? 'Выберите перевод' : 'Как это по-немецки?', opts: shuffle([ans, ...others]), a: ans };
+      });
+      const gq = shuffle((GRAMMAR[L.id] || []).flatMap(t => t.q || []))[0];
+      if (gq) vocab.push({ q: esc(gq[0]), hint: 'Грамматика', opts: gq[1], a: gq[1][gq[2]] });
+      return shuffle(vocab);
+    };
+    const finishTest = () => {
+      const L = LEVELS[Math.min(li, LEVELS.length - 1)];
+      prefs.placed = L.id; prefs.startLvl = L.id; prefs.newLvl = L.id; savePrefs(); checkAch();
+      const descr = { A0: 'Начните с самых основ: приветствия, числа, первые глаголы.', A1: 'Основы есть. Укрепим повседневную лексику и базовую грамматику.', A2: 'Вы уже объясняетесь в простых ситуациях. Дальше прошедшее время и падежи.', B1: 'Хорошая база. Пора расширять словарь и читать больше текстов.', B2: 'Уверенный уровень. Работайте над точностью и сложными темами.', C1: 'Отличный результат! Шлифуйте стиль и академическую лексику.' };
+      box.innerHTML = `<div class="result"><span class="eyebrow">Ваш уровень</span><b class="level-big">${L.id}</b><span style="font-weight:700">${esc(L.name)}</span><span class="muted" style="max-width:46ch">${descr[L.id]} Верных ответов: ${right} из ${total}.</span>
+        <div class="row" style="justify-content:center"><a class="btn primary" style="text-decoration:none" href="#level-${L.id}">Перейти к ${L.id}</a><button class="btn" id="p-add">+10 слов ${L.id} в повторение</button></div></div>`;
+      if (li > 0 && !reduceMotion()) confetti();
+      document.getElementById('p-add').onclick = () => { levelWords(L).filter(w => !srs[w.id] && !learned.has(w.id)).slice(0, 10).forEach(srsAddNew); location.hash = '#review'; };
+    };
+    const ask = () => {
+      if (qi >= qs.length) {
+        if (right >= 4 && li < LEVELS.length - 1) { li++; qi = 0; right = 0; qs = makeQs(LEVELS[li]); }
+        else { if (right >= 4) li = LEVELS.length - 1; return finishTest(); }
+      }
+      const q = qs[qi];
+      box.innerHTML = `<div class="quiz"><div class="sess-head" style="margin:0"><div class="sess-bar"><i style="width:${pct(li * 5 + qi, LEVELS.length * 5)}%"></i></div><span class="counter">${LEVELS[li].id} · ${qi + 1}/5</span></div>
+        <div class="q-word"><div>${q.q}</div><div class="q-hint">${q.hint}</div></div>
+        <div class="opts">${q.opts.map((o, k) => `<button class="opt" data-k="${k}">${esc(o)}</button>`).join('')}</div>
+        <div class="row" style="justify-content:center"><button class="btn" id="p-skip">Не знаю</button></div></div>`;
+      const go = ok => { total++; if (ok) right++; buzz(ok); qi++; setTimeout(ask, 140); };
+      box.querySelectorAll('.opt').forEach(b => b.onclick = () => go(q.opts[+b.dataset.k] === q.a));
+      document.getElementById('p-skip').onclick = () => go(false);
+      keys = { '1': () => box.querySelectorAll('.opt')[0]?.click(), '2': () => box.querySelectorAll('.opt')[1]?.click(), '3': () => box.querySelectorAll('.opt')[2]?.click(), '4': () => box.querySelectorAll('.opt')[3]?.click() };
+    };
+    qs = makeQs(LEVELS[0]); ask();
+  }
+
+  // =====================================================================
+  // Знакомство при первом запуске
+  // =====================================================================
+  function onboarding() {
+    const ov = document.createElement('div'); ov.className = 'onb'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Знакомство с приложением');
+    document.body.appendChild(ov);
+    let step = 0, goal = prefs.goal || 30;
+    const dots = () => `<div class="onb-dots">${[0, 1, 2].map(i => `<i class="${i === step ? 'on' : ''}"></i>`).join('')}</div>`;
+    const close = hash => { store.set('ww-onboarded', 1); ov.classList.add('out'); setTimeout(() => ov.remove(), 250); prefs.goal = goal; savePrefs(); updateTopStats(); if (hash) location.hash = hash; else route(); };
+    const draw = () => {
+      if (step === 0) ov.innerHTML = `<div class="onb-card">${dots()}<div class="onb-logo"><span class="brand-mark big">W</span></div>
+        <h1>Willkommen!</h1><p class="lead">Wortweg — немецкий от нуля до C1 за несколько минут в день.</p>
+        <div class="onb-list"><div><span class="qi">${UI.levels}</span><span><b>3000 слов по уровням</b><small>с переводом, озвучкой и родом</small></span></div><div><span class="qi">${UI.review}</span><span><b>Повторение в нужный момент</b><small>слова возвращаются, пока вы их не запомните</small></span></div><div><span class="qi">${UI.texts}</span><span><b>Грамматика и тексты</b><small>правила, тесты и 90 текстов</small></span></div></div>
+        <button class="btn primary big wide" id="o-next">Начать</button><button class="link-btn" id="o-skip">Пропустить</button></div>`;
+      if (step === 1) ov.innerHTML = `<div class="onb-card">${dots()}<h1>Цель на день</h1><p class="lead">Сколько времени вы готовы уделять немецкому? Цель можно поменять в профиле.</p>
+        <div class="goal-opts">${[[10, 'Лёгкая', '≈ 5 минут'], [30, 'Обычная', '≈ 10 минут'], [50, 'Серьёзная', '≈ 15 минут'], [100, 'Интенсив', '≈ 30 минут']].map(([v, n, t]) => `<button class="goal-opt ${goal === v ? 'on' : ''}" data-g="${v}"><b>${n}</b><span>${v} XP · ${t}</span></button>`).join('')}</div>
+        <button class="btn primary big wide" id="o-next">Дальше</button></div>`;
+      if (step === 2) ov.innerHTML = `<div class="onb-card">${dots()}<h1>Ваш уровень</h1><p class="lead">Вы уже знаете немецкий?</p>
+        <div class="goal-opts one"><button class="goal-opt" id="o-zero"><b>Начинаю с нуля</b><span>Сразу к уровню A0</span></button><button class="goal-opt" id="o-test"><b>Немного знаю — пройти тест</b><span>5 минут, подберём уровень</span></button></div>
+        <div class="chips" style="justify-content:center;margin:4px 0 0">${LEVELS.map(L => `<button class="chip" data-ol="${L.id}">${L.id}</button>`).join('')}</div><p class="muted" style="font-size:13px;margin:0">или выберите уровень сами</p></div>`;
+      const nx = ov.querySelector('#o-next'); if (nx) nx.onclick = () => { step++; draw(); };
+      const sk = ov.querySelector('#o-skip'); if (sk) sk.onclick = () => close();
+      ov.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { goal = +b.dataset.g; draw(); });
+      const z = ov.querySelector('#o-zero'); if (z) z.onclick = () => { prefs.startLvl = 'A0'; prefs.newLvl = 'A0'; close('#level-A0'); };
+      const t = ov.querySelector('#o-test'); if (t) t.onclick = () => close('#placement');
+      ov.querySelectorAll('[data-ol]').forEach(b => b.onclick = () => { prefs.startLvl = b.dataset.ol; prefs.newLvl = b.dataset.ol; close('#level-' + b.dataset.ol); });
+    };
+    draw();
+  }
+
   function route() {
     const h = location.hash.slice(1);
     let m;
@@ -1091,6 +1418,9 @@
     else if (h === 'texts-all') viewTextsAll();
     else if (h === 'settings' || h === 'profile') viewSettings();
     else if (h === 'review') viewReview();
+    else if (h === 'verbs') viewVerbs();
+    else if ((m = h.match(/^verb-(\d+)$/))) viewVerb(+m[1]);
+    else if (h === 'placement') viewPlacement();
     else if ((m = h.match(/^texts-(\w+)$/)) && lvlById(m[1])) viewTextsLevel(lvlById(m[1]));
     else if ((m = h.match(/^text-(\w+)-(\d+)$/)) && lvlById(m[1])) viewText(lvlById(m[1]), +m[2]);
     else if ((m = h.match(/^gender-(\w+)$/)) && lvlById(m[1])) viewGender(lvlById(m[1]));
@@ -1099,8 +1429,11 @@
     else if (h === 'search') viewSearch();
     else viewHome();
     window.scrollTo(0, 0);
+    if (!reduceMotion()) { app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); }
   }
   window.addEventListener('hashchange', route);
   route();
   updateTopStats();
+  checkAch(); achReady = true;
+  try { if (!localStorage.getItem('ww-onboarded') && !Object.keys(srs).length && !learned.size && !Object.keys(activity).length) onboarding(); } catch (e) {}
 })();
