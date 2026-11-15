@@ -570,6 +570,36 @@ h3 { font-size: 17px; font-weight: 700; }
 .goal-opt.on { border-color: var(--violet); background: var(--tint); }
 @media (prefers-reduced-motion: reduce) { #app.enter, .onb, .flash .ans, .streak-chip.pulse { animation: none !important; } }
 
+/* ===== рейтинг ===== */
+.emblem { display: block; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .25)); }
+.chip-emb { display: grid; place-items: center; margin-left: 2px; }
+.chip-emb .emblem { filter: none; }
+.rank-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(90px, 40%); gap: 12px; align-items: center; text-decoration: none; padding: 4px 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.rank-txt { display: flex; flex-direction: column; min-width: 0; }
+.rank-txt b { font-family: var(--font-display); font-size: 17px; }
+.rank-txt span { font-size: 13px; color: var(--muted); }
+.rank-bar { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.rank-bar .bar { width: 100%; }
+.rank-fill { background: linear-gradient(90deg, #ffb347, #ff6f91) !important; }
+.rank-card { gap: 16px; }
+.rank-main { display: flex; gap: 18px; align-items: center; }
+.rank-name { font-family: var(--font-display); font-size: clamp(26px, 5vw, 34px); font-weight: 800; line-height: 1.1; margin: 2px 0 4px; }
+.rank-ladder { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.rung { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 10px 2px; border-radius: 14px; border: 1px solid transparent; min-width: 0; }
+.rung b { font-size: 12px; line-height: 1.2; overflow-wrap: anywhere; }
+.rung small { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+.rung:not(.on) { opacity: .55; }
+.rung.cur { border-color: var(--violet); background: var(--tint); }
+@media (max-width: 560px) { .rank-ladder { grid-template-columns: repeat(4, minmax(0, 1fr)); } .rank-main { gap: 12px; } .rank-emb.big .emblem { width: 76px; height: 76px; } }
+.rank-up { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 16px; background: rgba(6, 5, 24, .62); backdrop-filter: blur(6px); animation: enter .25s ease-out; transition: opacity .2s; }
+.rank-up.out { opacity: 0; }
+.rank-up-card { width: min(380px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 26px 20px 20px; border-radius: 24px; background: var(--surface); border: 1px solid var(--violet); box-shadow: 0 24px 70px var(--shadow); }
+.rank-up-card h2 { font-size: 30px; }
+@keyframes embIn { 0% { transform: scale(.3) rotate(-25deg); opacity: 0; } 60% { transform: scale(1.12) rotate(6deg); opacity: 1; } 100% { transform: none; } }
+.rank-up-emb .emblem { animation: embIn .7s cubic-bezier(.2, .9, .3, 1.2); }
+@media (prefers-reduced-motion: reduce) { .rank-up-emb .emblem, .rank-up { animation: none !important; } }
+@media (max-width: 400px) { .top-title { display: none; } }
+
 footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>

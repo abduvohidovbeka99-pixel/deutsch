@@ -162,6 +162,7 @@
         <h1>${hello}</h1>
         <p class="lead">Учите слова по уровням, разбирайте грамматику и читайте тексты с тестами на понимание.</p>
         <div class="card overall" style="margin-top:6px">
+          ${rankCard(true)}
           <div class="row" style="justify-content:space-between"><b>Общий прогресс словаря</b><span class="pct">${done} из ${total} · ${pct(done, total)}%</span></div>
           ${bar(pct(done, total))}
           <div class="stats" style="margin-top:6px">
@@ -212,6 +213,7 @@
     const seg = (key, opts) => `<div class="seg">${opts.map(([v, n]) => `<button data-set="${key}" data-val="${v}" class="${String(prefs[key]) === String(v) ? 'on' : ''}">${n}</button>`).join('')}</div>`;
     const sw = (key, id) => `<label class="switch"><input type="checkbox" id="${id}" data-toggle="${key}" ${prefs[key] ? 'checked' : ''}><i></i></label>`;
     app.innerHTML = `<div class="stack" style="gap:6px;margin-bottom:20px"><div class="eyebrow">Ваш прогресс и настройки</div><h1 style="font-size:clamp(26px,4.5vw,38px)">Профиль</h1></div>
+      ${rankCard(false)}
       ${profileStats()}
       ${achHtml()}
       <section class="set-group"><h2>Цель дня</h2>
@@ -776,13 +778,66 @@
     t.innerHTML = html; t.classList.add('show');
     clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), ms || 2600);
   }
+  // =====================================================================
+  // Рейтинг: ранги по общему XP
+  // =====================================================================
+  const RANKS = [
+    { id: 'none', name: 'Без титула', xp: 0, c1: '#c9c6dd', c2: '#7d7a99', gem: false },
+    { id: 'bronze', name: 'Бронза', xp: 100, c1: '#f0b27a', c2: '#9a5a2a', gem: '#ffe0c2' },
+    { id: 'silver', name: 'Серебро', xp: 500, c1: '#f2f4f7', c2: '#8e98a6', gem: '#ffffff' },
+    { id: 'gold', name: 'Золото', xp: 1500, c1: '#ffe27a', c2: '#c98a12', gem: '#fff6cf' },
+    { id: 'platinum', name: 'Платина', xp: 4000, c1: '#c9fff4', c2: '#3fa79a', gem: '#ecfffb' },
+    { id: 'sapphire', name: 'Сапфир', xp: 8000, c1: '#7fb6ff', c2: '#1d3bb8', gem: '#d6e6ff' },
+    { id: 'diamond', name: 'Алмаз', xp: 15000, c1: '#f2fdff', c2: '#6fc6f0', gem: '#ffffff' }
+  ];
+  const rankIndex = xp => { let i = 0; RANKS.forEach((r, k) => { if (xp >= r.xp) i = k; }); return i; };
+  let embN = 0;
+  function emblem(i, size, locked) {
+    const r = RANKS[i], id = 'em' + (++embN);
+    const c1 = locked ? '#8d8aa8' : r.c1, c2 = locked ? '#4b4870' : r.c2;
+    const pips = i > 0 ? Array.from({ length: Math.min(i, 6) }, (_, k) => { const n = Math.min(i, 6), x = 32 + (k - (n - 1) / 2) * 6.5; return `<circle cx="${x}" cy="53" r="1.9" fill="${locked ? '#c9c6dd' : '#fff'}" opacity=".9"/>`; }).join('') : '';
+    const gem = !r.gem ? `<circle cx="32" cy="29" r="9" fill="none" stroke="${locked ? '#c9c6dd' : '#fff'}" stroke-opacity=".8" stroke-width="2.5" stroke-dasharray="4 3.2"/>`
+      : `<path d="M32 15 L43 26 L32 44 L21 26 Z" fill="${locked ? '#d8d6ea' : r.gem}" fill-opacity="${locked ? .5 : .95}"/><path d="M21 26 H43 M32 15 L28 26 L32 44 L36 26 Z" fill="none" stroke="${c2}" stroke-opacity=".55" stroke-width="1.2" stroke-linejoin="round"/>`;
+    const spark = r.id === 'diamond' && !locked ? `<path d="M50 9 l1.6 3.6 3.6 1.6 -3.6 1.6 -1.6 3.6 -1.6 -3.6 -3.6 -1.6 3.6 -1.6z" fill="#fff"/><path d="M13 40 l1 2.3 2.3 1 -2.3 1 -1 2.3 -1 -2.3 -2.3 -1 2.3 -1z" fill="#fff" opacity=".85"/>` : '';
+    return `<svg class="emblem" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
+      <path d="M32 3 L56 11.5 V30 C56 45 45.5 55.5 32 61 C18.5 55.5 8 45 8 30 V11.5 Z" fill="url(#${id})" stroke="${c2}" stroke-width="2"/>
+      <path d="M32 7.5 L52 14.6 V30 C52 42.6 43.4 51.6 32 56.4" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.6"/>${gem}${pips}${spark}</svg>`;
+  }
+  function rankInfo() {
+    const xp = totalXP(), i = rankIndex(xp), cur = RANKS[i], nx = RANKS[i + 1];
+    return { xp, i, cur, nx, p: nx ? pct(xp - cur.xp, nx.xp - cur.xp) : 100, left: nx ? nx.xp - xp : 0 };
+  }
+  function rankUp(i) {
+    const r = RANKS[i];
+    const ov = document.createElement('div'); ov.className = 'rank-up'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Новый ранг');
+    ov.innerHTML = `<div class="rank-up-card"><span class="eyebrow">Новый ранг</span><div class="rank-up-emb">${emblem(i, 132)}</div><h2>${esc(r.name)}</h2><p class="muted" style="margin:0">У вас ${totalXP()} XP. ${RANKS[i + 1] ? `Следующий ранг «${esc(RANKS[i + 1].name)}» с ${RANKS[i + 1].xp} XP.` : 'Это высший ранг. Ausgezeichnet!'}</p><button class="btn primary big wide" id="ru-ok">Weiter!</button></div>`;
+    document.body.appendChild(ov);
+    confetti(); buzz(true);
+    const close = () => { ov.classList.add('out'); setTimeout(() => ov.remove(), 220); };
+    ov.querySelector('#ru-ok').onclick = close;
+    ov.onclick = e => { if (e.target === ov) close(); };
+  }
+  function rankCard(compact) {
+    const k = rankInfo();
+    if (compact) return `<a class="rank-row" href="#settings"><span class="rank-emb">${emblem(k.i, 44)}</span><span class="rank-txt"><b>${esc(k.cur.name)}</b><span>${k.nx ? `до «${esc(k.nx.name)}» ${k.left} XP` : 'высший ранг'}</span></span><span class="rank-bar"><span class="bar"><i class="rank-fill" style="width:${k.p}%"></i></span><span class="pct">${k.xp} XP</span></span></a>`;
+    return `<section class="set-group"><h2>Рейтинг</h2>
+      <div class="card rank-card">
+        <div class="rank-main"><div class="rank-emb big">${emblem(k.i, 96)}</div><div style="min-width:0;flex:1"><span class="eyebrow">Ваш ранг</span><div class="rank-name">${esc(k.cur.name)}</div><div class="muted" style="font-size:14px">${k.xp} XP всего${k.nx ? ` · до «${esc(k.nx.name)}» осталось ${k.left} XP` : ' · высший ранг'}</div>${k.nx ? `<div class="bar" style="margin-top:10px"><i class="rank-fill" style="width:${k.p}%"></i></div>` : ''}</div></div>
+        <div class="rank-ladder">${RANKS.map((r, i) => `<div class="rung ${i <= k.i ? 'on' : ''} ${i === k.i ? 'cur' : ''}"><span>${emblem(i, 40, i > k.i)}</span><b>${esc(r.name)}</b><small>${r.xp} XP</small></div>`).join('')}</div>
+        <p class="muted" style="margin:0;font-size:13px">Ранг растёт вместе с общим XP за все занятия: тесты, карточки, повторение, письмо, грамматику, тексты и тренажёры.</p>
+      </div></section>`;
+  }
+
   function addXP(n) {
+    const rankBefore = rankIndex(totalXP());
     const d = dayNum(), before = activity[d] || 0;
     activity[d] = before + n;
     store.set('ww-activity', activity);
     xpFloat(n);
     if (before < prefs.goal && activity[d] >= prefs.goal) { bump('goals'); confetti(); }
     checkAch();
+    const rankNow = rankIndex(totalXP());
+    if (rankNow > rankBefore) setTimeout(() => rankUp(rankNow), 350);
     if (before < prefs.goal && activity[d] >= prefs.goal) toast(`${UI.flame}<span><b>Цель дня выполнена!</b> ${activity[d]} XP · серия ${streakDays()} ${plural(streakDays(), 'день', 'дня', 'дней')}</span>`, 3500);
     updateTopStats();
   }
@@ -794,8 +849,8 @@
     const el = document.getElementById('streak-chip');
     if (el) {
       const s = streakDays();
-      el.innerHTML = `<span class="ring-wrap">${ring(xpToday() / prefs.goal, 30, 3.5)}<span class="ring-ico ${activity[dayNum()] ? 'lit' : ''}">${UI.flame}</span></span><b>${s}</b>`;
-      el.title = `Серия: ${s} ${plural(s, 'день', 'дня', 'дней')} · сегодня ${xpToday()} из ${prefs.goal} XP`;
+      el.innerHTML = `<span class="chip-emb" title="${esc(RANKS[rankIndex(totalXP())].name)}">${emblem(rankIndex(totalXP()), 24)}</span><span class="ring-wrap">${ring(xpToday() / prefs.goal, 30, 3.5)}<span class="ring-ico ${activity[dayNum()] ? 'lit' : ''}">${UI.flame}</span></span><b>${s}</b>`;
+      el.title = `${RANKS[rankIndex(totalXP())].name} · серия: ${s} ${plural(s, 'день', 'дня', 'дней')} · сегодня ${xpToday()} из ${prefs.goal} XP`;
       el.setAttribute('aria-label', el.title);
     }
     const badge = document.getElementById('rev-badge');
@@ -1157,6 +1212,7 @@
     { id: 't1', ic: 'texts', t: 'Первый текст', d: 'Прочитайте текст на 80%+', v: () => Object.values(textScores).filter(x => x >= 80).length, n: 1 },
     { id: 't20', ic: 'texts', t: 'Читатель', d: 'Прочитайте 20 текстов', v: () => Object.values(textScores).filter(x => x >= 80).length, n: 20 },
     { id: 'tall', ic: 'texts', t: 'Книжный червь', d: 'Прочитайте все тексты', v: () => Object.values(textScores).filter(x => x >= 80).length, n: Object.values(TEXTS).reduce((a, b) => a + b.length, 0) },
+    ...RANKS.slice(1).map((r, i) => ({ id: 'rank' + r.id, ic: 'bolt', t: 'Ранг: ' + r.name, d: `Наберите ${r.xp} XP`, v: () => totalXP(), n: r.xp })),
     { id: 'place', ic: 'search', t: 'Знаю свой уровень', d: 'Пройдите тест на уровень', v: () => prefs.placed ? 1 : 0, n: 1 },
     ...LEVELS.map(L => ({ id: 'lvl' + L.id, ic: 'levels', t: 'Уровень ' + L.id, d: 'Выучите все слова уровня ' + L.id, v: () => countLearned(levelWords(L)), n: levelWords(L).length }))
   ];
